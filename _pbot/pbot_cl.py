@@ -4,8 +4,10 @@
 
 from . import values
 from . import plog
+from typing import Any, NoReturn
 
 log = plog.DEFAULT_LOG
+
 
 class PermissionGroup:
     __user_list: list[str]
@@ -92,13 +94,82 @@ class PermissionGroup:
             plog.DEFAULT_LOG.success(f"找到用户 {user_id}")
             return True
         else:
-            plog.DEFAULT_LOG.info(f"未找到此用户 {user_id}")
+            plog.DEFAULT_LOG.warning(f"未找到此用户 {user_id}")
             return False
 
     def get_users(self) -> list:
         return self.__user_list
 
+    def save(self) -> dict[any]:
+        """
+        保存权限组内容
+        :return:字典，存储该权限组数据
+        """
+        # TODO 保存权限组数据
+
+    def load(self, data: dict[any]) -> NoReturn:
+        """
+        加载权限组数据
+        :param data: 使用save保存的字典数据
+        """
+        # TODO 加载权限组数据
+
+
 class EventClass:
-    def __int__(self,name: str):
-        log.info(f"创建事件 {str}")
+    __hooks: list[Any]
+
+    def __init__(self, name: str):
+        """
+        事件基类，用于表述pbot所以事件
+        :param name: 事件名称
+        """
+        log.info(f"创建事件 {name}")
+        self.__hooks = []
+        self.name = name
+
+    @classmethod
+    @log.catch(level="WARNING")
+    def __remind(cls, hook, **kwargs):
+        """
+        调用钩子函数的内部实现
+        :param hook: 钩子函数
+        :param kwargs: 参数
+        """
+        hook(**kwargs)
+
+    @log.catch(level="WARNING")
+    def add_hook(self, hook: Any, name: str):
+        """
+        添加钩子函数
+        :param name: 钩子名称，仅用于日志
+        :param hook: 钩子函数
+        """
+        log.info(f"{self.name}事件添加钩子{name}")
+        self.__hooks.append({name: hook})
+
+    @log.catch(level="WARNING")
+    def del_hook(self, name: str) -> any:
+        """
+        删除钩子函数
+        :param name: 钩子名称
+        :return: 删除的钩子函数
+        """
+        log.info(f"{self.name}事件删除钩子 {name}")
+        if name in self.__hooks:
+            _ = self.__hooks[name]
+            del self.__hooks[name]
+            log.success(f"{self.name}事件成功删除钩子 {name}")
+            return _
+        else:
+            log.warning(f"{self.name}事件未找到 {name} 钩子")
+
+    def remind_hooks(self, **kwargs) -> NoReturn:
+        """
+        调用钩子函数
+        :param kwargs: 调用钩子函数的参数
+        """
+        log.info("调用钩子函数")
+        for i, y in self.__hooks.items():
+            log.info(f"{self.name}事件调用钩子{i}")
+            self.__remind(y, **kwargs)
 
