@@ -28,7 +28,7 @@ class PermissionGroup:
             values.pg_list.remove(self)
             plog.DEFAULT_LOG.info(f"{self.name}已卸载")
 
-    @plog.DEFAULT_LOG.catch(level="WARNING")
+    @log.catch(level="WARNING")
     def set_p(self, p: int) -> bool:
         """
         设置权限组权限
@@ -53,7 +53,7 @@ class PermissionGroup:
         """
         return self.__p
 
-    @plog.DEFAULT_LOG.catch(level="WARNING")
+    @log.catch(level="WARNING")
     def add_user(self, user_id: str) -> bool:
         """
         为权限组添加用户
@@ -103,16 +103,32 @@ class PermissionGroup:
     def save(self) -> dict[any]:
         """
         保存权限组内容
-        :return:字典，存储该权限组数据
+        :return: 字典，存储该权限组数据
         """
-        # TODO 保存权限组数据
+        data = {
+            "Type": "PermissionGroup",
+            "Name": self.name,
+            "Permission": self.__p,
+            "Users": self.__user_list,
+        }
+        return data
 
-    def load(self, data: dict[any]) -> NoReturn:
+    @log.catch(level="WARNING")
+    def load(self, data: dict[any]) -> bool:
         """
         加载权限组数据
         :param data: 使用save保存的字典数据
+        :return: 布尔值
         """
-        # TODO 加载权限组数据
+        log.info(f"{self.name}加载配置\n{data}")
+        if data["Type"] != "PermissionGroup":
+            log.warning("不支持的数据")
+            return False
+        self.name = data["Name"]
+        self.__p = data["Permission"]
+        self.__user_list = data["Users"]
+        log.success("加载成功")
+        return True
 
 
 class EventClass:
@@ -172,4 +188,3 @@ class EventClass:
         for i, y in self.__hooks.items():
             log.info(f"{self.name}事件调用钩子{i}")
             self.__remind(y, **kwargs)
-
